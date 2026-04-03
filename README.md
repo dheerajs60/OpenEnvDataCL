@@ -1,3 +1,13 @@
+---
+title: OpenEnv Data Cleaning
+emoji: 🧹
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # OpenEnv Data Cleaning Environment
 
 A rigorous data cleaning benchmark for AI agents, complying with OpenEnv standards.
@@ -20,8 +30,8 @@ docker run -p 8000:8000 dataclean-env
 Ensure the API is running locally on port 8000, then execute the inference script:
 
 ```bash
-export API_BASE_URL="https://api.openai.com/v1" # or HF endpoint
-export MODEL_NAME="gpt-4o-mini"
+export API_BASE_URL="https://router.huggingface.co/v1"
+export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
 export HF_TOKEN="your-token"
 
 python inference.py
