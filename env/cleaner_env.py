@@ -74,7 +74,7 @@ class DataCleanerEnv:
 
         invalid_action = False
 
-        # Repeated action penalty
+        # repeated action penalty
         repeat_penalty = 0.0
         current_action = action.model_dump()
 
@@ -83,10 +83,23 @@ class DataCleanerEnv:
 
         self.last_action = current_action
 
-        # Apply cleaning action
         try:
+            # ✅ improved dtype-aware fill_missing
             if op == "fill_missing" and col in self.df.columns and val is not None:
-                self.df[col] = self.df[col].fillna(val)
+                try:
+                    col_dtype = self.df[col].dtype
+
+                    if pd.api.types.is_numeric_dtype(col_dtype):
+                        cast_val = float(val)
+                    elif pd.api.types.is_datetime64_any_dtype(col_dtype):
+                        cast_val = pd.to_datetime(val, errors="coerce")
+                    else:
+                        cast_val = str(val)
+
+                    self.df[col] = self.df[col].fillna(cast_val)
+
+                except Exception:
+                    self.df[col] = self.df[col].fillna(str(val))
 
             elif op == "remove_duplicates":
                 self.df = self.df.drop_duplicates()
@@ -124,32 +137,26 @@ class DataCleanerEnv:
         except Exception:
             invalid_action = True
 
-        # Max steps termination
         if self.step_count >= self.max_steps:
             self.done = True
 
-        # Base reward from grader
         reward_val, reason = self.grader.grade_step(
             prev_df, self.df, current_action
         )
 
-        # Add repeat penalty
         reward_val += repeat_penalty
         if repeat_penalty < 0:
             reason += " | repeated_action_penalty"
 
-        # Invalid action penalty
         if invalid_action:
             reward_val -= 0.1
             reason += " | invalid_action_penalty"
 
-        # Excessive row deletion exploit protection
         row_loss_ratio = 1 - (len(self.df) / max(len(prev_df), 1))
         if row_loss_ratio > 0.5:
             reward_val -= 0.3
             reason += " | excessive_row_loss"
 
-        # Clamp reward
         reward_val = max(min(reward_val, 1.0), -1.0)
 
         reward = Reward(score=reward_val, reason=reason)
