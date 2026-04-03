@@ -11,6 +11,11 @@ env_instance = DataCleanerEnv()
 class ResetRequest(BaseModel):
     difficulty: Optional[str] = None
 
+class StepResponse(BaseModel):
+    observation: Observation
+    reward: dict
+    done: bool
+    info: dict
 @app.post("/reset", response_model=Observation)
 def reset_env(req: ResetRequest = None):
     try:
@@ -19,7 +24,7 @@ def reset_env(req: ResetRequest = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/step")
+@app.post("/step", response_model=StepResponse)
 def step_env(action: Action):
     try:
         obs, reward, done, info = env_instance.step(action)
@@ -38,7 +43,20 @@ def get_state():
         return env_instance.state()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "service": "Data Cleaning OpenEnv",
+        "endpoints": {
+            "reset": "POST /reset",
+            "step": "POST /step",
+            "state": "GET /state"
+        }
+    }
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 import uvicorn
 def main():
     uvicorn.run(app, host="0.0.0.0", port=8000)
