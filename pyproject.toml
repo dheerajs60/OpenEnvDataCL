@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "data-cleaner-env"
+version = "1.0.0"
+description = "OpenEnv Data Cleaning Environment"
+readme = "README.md"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pandas",
+    "openai",
+    "openenv-core>=0.2.0"
+]
+
+[project.scripts]
+server = "server.app:main"

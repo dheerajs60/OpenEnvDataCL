@@ -1,0 +1,164 @@
+import random
+import pandas as pd
+from typing import Dict, Any
+
+from env.tasks import TASKS
+from env.graders import Grader
+from env.models import Observation, Action, Reward
+
+
+class DataCleanerEnv:
+    def __init__(self):
+        self.df: pd.DataFrame | None = None
+        self.orig_df: pd.DataFrame | None = None
+        self.task_difficulty: str | None = None
+        self.grader: Grader | None = None
+        self.step_count: int = 0
+        self.max_steps: int = 20
+        self.done: bool = False
+        self.last_action: dict | None = None
+
+    def reset(self, difficulty: str = None) -> Observation:
+        if difficulty not in TASKS:
+            difficulty = random.choice(list(TASKS.keys()))
+
+        self.task_difficulty = difficulty
+        self.orig_df = TASKS[difficulty]()
+        self.df = self.orig_df.copy()
+
+        self.grader = Grader(self.task_difficulty)
+        self.step_count = 0
+        self.done = False
+        self.last_action = None
+
+        return self._get_obs()
+
+    def _get_obs(self) -> Observation:
+        schema = self.grader.generate_schema(self.df)
+        issues = self.grader.detect_issues(self.df)
+
+        preview_df = self.df.head(5).where(pd.notnull(self.df), None)
+        rows_preview = preview_df.to_dict(orient="records")
+
+        return Observation(
+            rows_preview=rows_preview,
+            table_schema=schema,
+            detected_issues=issues,
+            step_count=self.step_count
+        )
+
+    def state(self) -> Dict[str, Any]:
+        return {
+            "task_difficulty": self.task_difficulty,
+            "step_count": self.step_count,
+            "done": self.done,
+            "df_shape": self.df.shape if self.df is not None else None,
+        }
+
+    def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
+        if self.done:
+            obs = self._get_obs()
+            return (
+                obs,
+                Reward(score=0.0, reason="Episode already done"),
+                True,
+                {"msg": "Episode already done"},
+            )
+
+        prev_df = self.df.copy()
+        self.step_count += 1
+
+        op = action.operation
+        col = action.column
+        val = action.value
+
+        invalid_action = False
+
+        # Repeated action penalty
+        repeat_penalty = 0.0
+        current_action = action.model_dump()
+
+        if self.last_action == current_action:
+            repeat_penalty = -0.05
+
+        self.last_action = current_action
+
+        # Apply cleaning action
+        try:
+            if op == "fill_missing" and col in self.df.columns and val is not None:
+                self.df[col] = self.df[col].fillna(val)
+
+            elif op == "remove_duplicates":
+                self.df = self.df.drop_duplicates()
+
+            elif op == "standardize_date" and col in self.df.columns:
+                self.df[col] = (
+                    pd.to_datetime(self.df[col], errors="coerce")
+                    .dt.strftime("%Y-%m-%d")
+                )
+
+            elif op == "normalize_text" and col in self.df.columns:
+                self.df[col] = (
+                    self.df[col]
+                    .astype(str)
+                    .str.strip()
+                    .str.title()
+                )
+
+            elif op == "rename_column" and col in self.df.columns and val is not None:
+                self.df = self.df.rename(columns={col: val})
+
+            elif op == "fix_category" and col in self.df.columns and val is not None:
+                if ":" in val:
+                    old_c, new_c = val.split(":", 1)
+                    self.df[col] = self.df[col].replace(old_c, new_c)
+                else:
+                    invalid_action = True
+
+            elif op == "stop":
+                self.done = True
+
+            else:
+                invalid_action = True
+
+        except Exception:
+            invalid_action = True
+
+        # Max steps termination
+        if self.step_count >= self.max_steps:
+            self.done = True
+
+        # Base reward from grader
+        reward_val, reason = self.grader.grade_step(
+            prev_df, self.df, current_action
+        )
+
+        # Add repeat penalty
+        reward_val += repeat_penalty
+        if repeat_penalty < 0:
+            reason += " | repeated_action_penalty"
+
+        # Invalid action penalty
+        if invalid_action:
+            reward_val -= 0.1
+            reason += " | invalid_action_penalty"
+
+        # Excessive row deletion exploit protection
+        row_loss_ratio = 1 - (len(self.df) / max(len(prev_df), 1))
+        if row_loss_ratio > 0.5:
+            reward_val -= 0.3
+            reason += " | excessive_row_loss"
+
+        # Clamp reward
+        reward_val = max(min(reward_val, 1.0), -1.0)
+
+        reward = Reward(score=reward_val, reason=reason)
+
+        info = {"score": 0.0}
+        if self.done:
+            info["score"] = self.grader.calculate_final_score(
+                self.orig_df, self.df
+            )
+
+        obs = self._get_obs()
+        return obs, reward, self.done, info
