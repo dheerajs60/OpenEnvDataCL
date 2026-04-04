@@ -43,17 +43,81 @@ def get_state():
         return env_instance.state()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@app.get("/")
+
+
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return {
-        "status": "ok",
-        "service": "Data Cleaning OpenEnv",
-        "endpoints": {
-            "reset": "POST /reset",
-            "step": "POST /step",
-            "state": "GET /state"
-        }
-    }
+    return """
+    <html>
+    <head>
+        <title>🧹 OpenEnv Data Cleaning</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 900px;
+                margin: 40px auto;
+                padding: 20px;
+                line-height: 1.6;
+                background: #0f172a;
+                color: #f8fafc;
+            }
+            h1 { color: #38bdf8; }
+            h2 { color: #22c55e; }
+            code {
+                background: #1e293b;
+                padding: 4px 8px;
+                border-radius: 6px;
+            }
+            pre {
+                background: #1e293b;
+                padding: 14px;
+                border-radius: 10px;
+                overflow-x: auto;
+            }
+            .box {
+                background: #111827;
+                padding: 20px;
+                border-radius: 14px;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🧹 OpenEnv Data Cleaning Benchmark</h1>
+        <p>
+            A real-world multi-step benchmark for evaluating LLM agents on
+            <b>tabular CRM data cleaning workflows</b>.
+        </p>
+
+        <div class="box">
+            <h2>📡 API Endpoints</h2>
+            <ul>
+                <li><code>POST /reset</code> → load easy / medium / hard task</li>
+                <li><code>POST /step</code> → apply cleaning action</li>
+                <li><code>GET /state</code> → current environment metadata</li>
+                <li><code>GET /health</code> → service health check</li>
+            </ul>
+        </div>
+
+        <div class="box">
+            <h2>🧪 Example</h2>
+            <pre>curl -X POST /reset -d '{"difficulty":"hard"}'</pre>
+        </div>
+
+        <div class="box">
+            <h2>🏆 Benchmark Features</h2>
+            <ul>
+                <li>3 difficulty levels</li>
+                <li>dynamic reward shaping</li>
+                <li>duplicate removal</li>
+                <li>missing value repair</li>
+                <li>date normalization</li>
+                <li>real-world CRM cleaning</li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """
 @app.get("/health")
 def health():
     return {"status": "ok"}
