@@ -48,519 +48,181 @@ def get_state():
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>OpenEnv Data Cleaning Benchmark | Scalar x Meta Hackathon</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            
-            body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-                color: #e2e8f0;
-                line-height: 1.7;
-                min-height: 100vh;
-            }
-            
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 40px 20px;
-            }
-            
-            header {
-                text-align: center;
-                margin-bottom: 60px;
-                padding: 40px 20px;
-                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-                border-radius: 20px;
-                border: 1px solid rgba(56, 189, 248, 0.2);
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            }
-            
-            h1 {
-                font-size: 3.5rem;
-                font-weight: 800;
-                background: linear-gradient(135deg, #38bdf8 0%, #22c55e 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                margin-bottom: 20px;
-                letter-spacing: -1px;
-            }
-            
-            .tagline {
-                font-size: 1.3rem;
-                color: #94a3b8;
-                font-weight: 300;
-                margin-bottom: 30px;
-            }
-            
-            .badges {
-                display: flex;
-                justify-content: center;
-                gap: 15px;
-                flex-wrap: wrap;
-                margin-top: 25px;
-            }
-            
-            .badge {
-                padding: 8px 20px;
-                background: rgba(56, 189, 248, 0.1);
-                border: 1px solid rgba(56, 189, 248, 0.3);
-                border-radius: 50px;
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: #38bdf8;
-                letter-spacing: 0.5px;
-            }
-            
-            .grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-                gap: 30px;
-                margin-bottom: 40px;
-            }
-            
-            .card {
-                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                padding: 35px;
-                border-radius: 16px;
-                border: 1px solid rgba(148, 163, 184, 0.1);
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-                transition: all 0.3s ease;
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, #38bdf8, #22c55e);
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-            
-            .card:hover {
-                border-color: rgba(56, 189, 248, 0.3);
-                transform: translateY(-5px);
-                box-shadow: 0 20px 60px rgba(56, 189, 248, 0.15);
-            }
-            
-            .card:hover::before {
-                opacity: 1;
-            }
-            
-            h2 {
-                font-size: 1.8rem;
-                color: #38bdf8;
-                margin-bottom: 20px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-            
-            .icon {
-                font-size: 2rem;
-            }
-            
-            .endpoint {
-                background: #0f172a;
-                padding: 15px;
-                border-radius: 10px;
-                margin: 12px 0;
-                border-left: 3px solid #38bdf8;
-                font-family: 'Monaco', 'Courier New', monospace;
-                position: relative;
-                transition: all 0.2s ease;
-            }
-            
-            .endpoint:hover {
-                background: #1e293b;
-                border-left-color: #22c55e;
-            }
-            
-            .method {
-                display: inline-block;
-                padding: 4px 12px;
-                border-radius: 6px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                margin-right: 10px;
-                letter-spacing: 0.5px;
-            }
-            
-            .post { background: #22c55e; color: #000; }
-            .get { background: #38bdf8; color: #000; }
-            
-            .path {
-                color: #e2e8f0;
-                font-weight: 600;
-            }
-            
-            .description {
-                color: #94a3b8;
-                font-size: 0.9rem;
-                margin-top: 8px;
-                font-style: italic;
-            }
-            
-            pre {
-                background: #0f172a;
-                padding: 20px;
-                border-radius: 12px;
-                overflow-x: auto;
-                border: 1px solid rgba(148, 163, 184, 0.1);
-                position: relative;
-                margin: 15px 0;
-            }
-            
-            code {
-                font-family: 'Monaco', 'Courier New', monospace;
-                font-size: 0.9rem;
-                color: #22c55e;
-                line-height: 1.6;
-            }
-            
-            .copy-btn {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: rgba(56, 189, 248, 0.2);
-                border: 1px solid #38bdf8;
-                color: #38bdf8;
-                padding: 6px 14px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 0.8rem;
-                transition: all 0.2s ease;
-            }
-            
-            .copy-btn:hover {
-                background: #38bdf8;
-                color: #000;
-            }
-            
-            .features {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-                margin-top: 25px;
-            }
-            
-            .feature {
-                padding: 20px;
-                background: rgba(56, 189, 248, 0.05);
-                border-radius: 12px;
-                border: 1px solid rgba(56, 189, 248, 0.1);
-                transition: all 0.3s ease;
-            }
-            
-            .feature:hover {
-                background: rgba(56, 189, 248, 0.1);
-                border-color: rgba(56, 189, 248, 0.3);
-            }
-            
-            .feature-icon {
-                font-size: 2.5rem;
-                margin-bottom: 10px;
-            }
-            
-            .feature-title {
-                font-weight: 700;
-                color: #38bdf8;
-                margin-bottom: 8px;
-                font-size: 1.1rem;
-            }
-            
-            .feature-desc {
-                color: #94a3b8;
-                font-size: 0.9rem;
-            }
-            
-            .stats {
-                display: flex;
-                justify-content: space-around;
-                margin-top: 30px;
-                padding: 30px;
-                background: rgba(34, 197, 94, 0.05);
-                border-radius: 16px;
-                border: 1px solid rgba(34, 197, 94, 0.2);
-            }
-            
-            .stat {
-                text-align: center;
-            }
-            
-            .stat-value {
-                font-size: 3rem;
-                font-weight: 800;
-                color: #22c55e;
-                line-height: 1;
-            }
-            
-            .stat-label {
-                color: #94a3b8;
-                margin-top: 8px;
-                font-size: 0.9rem;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-            
-            footer {
-                text-align: center;
-                margin-top: 60px;
-                padding: 30px;
-                color: #64748b;
-                border-top: 1px solid rgba(148, 163, 184, 0.1);
-            }
-            
-            .cta {
-                background: linear-gradient(135deg, #38bdf8 0%, #22c55e 100%);
-                color: #000;
-                padding: 15px 40px;
-                border-radius: 50px;
-                font-weight: 700;
-                text-decoration: none;
-                display: inline-block;
-                margin-top: 20px;
-                transition: all 0.3s ease;
-                box-shadow: 0 10px 30px rgba(56, 189, 248, 0.3);
-            }
-            
-            .cta:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 15px 40px rgba(56, 189, 248, 0.4);
-            }
-            
-            @media (max-width: 768px) {
-                h1 { font-size: 2.5rem; }
-                .tagline { font-size: 1.1rem; }
-                .grid { grid-template-columns: 1fr; }
-                .stat-value { font-size: 2rem; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <header>
-                <h1>🧹 OpenEnv Data Cleaning</h1>
-                <p class="tagline">Production-Grade RL Benchmark for Tabular Data Cleaning</p>
-                <div class="badges">
-                    <span class="badge">🏆 SCALAR x META HACKATHON</span>
-                    <span class="badge">⚡ FASTAPI POWERED</span>
-                    <span class="badge">🤖 LLM-READY</span>
-                </div>
-            </header>
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenEnv — Data Cleaning Benchmark</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #0f172a; color: #f1f5f9; line-height: 1.6; }
+  a { color: #38bdf8; text-decoration: none; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85em; background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #7dd3fc; }
+  .wrapper { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
 
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value">3</div>
-                    <div class="stat-label">Difficulty Levels</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">50+</div>
-                    <div class="stat-label">Test Cases</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">9</div>
-                    <div class="stat-label">Operations</div>
-                </div>
-            </div>
+  /* hero */
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; background: #1e1b4b; color: #a5b4fc; border: 1px solid #3730a3; margin-bottom: 1.25rem; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #818cf8; display: inline-block; }
+  h1 { font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 0.75rem; }
+  h1 span { color: #38bdf8; }
+  .tagline { font-size: 1rem; color: #94a3b8; max-width: 640px; margin-bottom: 1.5rem; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 2.5rem; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 99px; border: 1px solid #334155; color: #64748b; background: #1e293b; font-weight: 500; }
+  .divider { height: 1px; background: #1e293b; margin: 2rem 0; }
 
-            <div class="grid">
-                <div class="card">
-                    <h2><span class="icon">📡</span> API Endpoints</h2>
-                    
-                    <div class="endpoint">
-                        <span class="method post">POST</span>
-                        <span class="path">/reset</span>
-                        <div class="description">Initialize environment with task difficulty</div>
-                    </div>
-                    
-                    <div class="endpoint">
-                        <span class="method post">POST</span>
-                        <span class="path">/step</span>
-                        <div class="description">Execute cleaning action and receive reward</div>
-                    </div>
-                    
-                    <div class="endpoint">
-                        <span class="method get">GET</span>
-                        <span class="path">/state</span>
-                        <div class="description">Retrieve current environment metadata</div>
-                    </div>
-                    
-                    <div class="endpoint">
-                        <span class="method get">GET</span>
-                        <span class="path">/health</span>
-                        <div class="description">Service health check endpoint</div>
-                    </div>
-                </div>
+  /* section titles */
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; margin-bottom: 1rem; }
 
-                <div class="card">
-                    <h2><span class="icon">🚀</span> Quick Start</h2>
-                    <pre><button class="copy-btn" onclick="copyCode(this, 0)">📋 Copy</button><code id="code-0"># Reset environment
-curl -X POST http://localhost:8000/reset \\
-  -H "Content-Type: application/json" \\
-  -d '{"difficulty": "hard"}'
+  /* feature cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: #1e293b; border: 1px solid #1e293b; border-radius: 14px; overflow: hidden; margin-bottom: 2.5rem; }
+  .feat { background: #0f172a; padding: 1.1rem 1.25rem; }
+  .feat-icon { font-size: 18px; margin-bottom: 8px; }
+  .feat h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #e2e8f0; }
+  .feat p { font-size: 13px; color: #64748b; line-height: 1.5; }
 
-# Execute cleaning action
-curl -X POST http://localhost:8000/step \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "operation": "fill_missing",
-    "column": "age",
-    "value": "median"
-  }'</code></pre>
-                </div>
-            </div>
+  /* pipeline */
+  .pipeline { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 2.5rem; }
+  .step { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 500; color: #cbd5e1; }
+  .arrow { color: #334155; font-size: 18px; font-weight: 300; }
 
-            <div class="card">
-                <h2><span class="icon">🎯</span> Benchmark Features</h2>
-                <div class="features">
-                    <div class="feature">
-                        <div class="feature-icon">🔍</div>
-                        <div class="feature-title">Smart Detection</div>
-                        <div class="feature-desc">Automatic error identification in messy datasets</div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">🎨</div>
-                        <div class="feature-title">Schema Normalization</div>
-                        <div class="feature-desc">Standardize column names and data types</div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">📅</div>
-                        <div class="feature-title">Date Formatting</div>
-                        <div class="feature-desc">Unify mixed datetime formats</div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">🗑️</div>
-                        <div class="feature-title">Deduplication</div>
-                        <div class="feature-desc">Remove exact and fuzzy duplicates</div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">💉</div>
-                        <div class="feature-title">Missing Values</div>
-                        <div class="feature-desc">Intelligent null imputation strategies</div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">📊</div>
-                        <div class="feature-title">Real CRM Data</div>
-                        <div class="feature-desc">Production-like customer data chaos</div>
-                    </div>
-                </div>
-            </div>
+  /* endpoints */
+  .endpoints { display: flex; flex-direction: column; gap: 1px; background: #1e293b; border: 1px solid #1e293b; border-radius: 14px; overflow: hidden; margin-bottom: 2.5rem; }
+  .ep { display: flex; align-items: flex-start; gap: 12px; background: #0f172a; padding: 1rem 1.25rem; }
+  .method { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; min-width: 46px; text-align: center; flex-shrink: 0; margin-top: 2px; font-family: monospace; letter-spacing: 0.04em; }
+  .post { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .get { background: #0c1a2e; color: #38bdf8; border: 1px solid #0369a1; }
+  .ep-path { font-family: monospace; font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .ep-desc { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-            <div class="grid">
-                <div class="card">
-                    <h2><span class="icon">🏅</span> Difficulty Levels</h2>
-                    <div style="margin-top: 20px;">
-                        <div class="feature" style="border-left: 4px solid #22c55e;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.5rem;">🟢</span>
-                                <div>
-                                    <div class="feature-title">Easy</div>
-                                    <div class="feature-desc">Single issue: missing values or duplicates</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="feature" style="border-left: 4px solid #f59e0b; margin-top: 15px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.5rem;">🟡</span>
-                                <div>
-                                    <div class="feature-title">Medium</div>
-                                    <div class="feature-desc">Multiple issues: dates + nulls + duplicates</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="feature" style="border-left: 4px solid #ef4444; margin-top: 15px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.5rem;">🔴</span>
-                                <div>
-                                    <div class="feature-title">Hard</div>
-                                    <div class="feature-desc">Real CRM chaos: schema inconsistencies + encodings</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  /* action space */
+  .code-block { background: #0a0f1a; border: 1px solid #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; line-height: 2; margin-bottom: 2.5rem; overflow-x: auto; }
+  .op { color: #818cf8; font-weight: 600; }
+  .arg { color: #34d399; }
+  .cmt { color: #334155; }
 
-                <div class="card">
-                    <h2><span class="icon">⚙️</span> Available Operations</h2>
-                    <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">fill_missing</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">deduplicate</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">rename_column</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">standardize_date</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">convert_dtype</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">drop_column</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">remove_outliers</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">merge_columns</code>
-                        <code style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; display: block;">split_column</code>
-                    </div>
-                </div>
-            </div>
+  /* reward table */
+  .rtable { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 2.5rem; }
+  .rtable th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #475569; text-align: left; padding: 0 0 10px; border-bottom: 1px solid #1e293b; }
+  .rtable td { padding: 10px 0; border-bottom: 1px solid #0f172a; color: #94a3b8; vertical-align: middle; }
+  .pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; font-family: monospace; }
+  .pos { background: #052e16; color: #4ade80; }
+  .neg { background: #1c0a0a; color: #f87171; }
+  .neutral { background: #1e293b; color: #94a3b8; }
 
-            <div class="card">
-                <h2><span class="icon">🎁</span> Reward System</h2>
-                <div style="margin-top: 20px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div>
-                            <h3 style="color: #22c55e; margin-bottom: 15px;">✅ Positive Rewards</h3>
-                            <div style="color: #94a3b8; line-height: 2;">
-                                <div>🎯 <strong>+1 to +5</strong> per error fixed</div>
-                                <div>⚡ <strong>+0.5</strong> valid transformation</div>
-                                <div>🏆 <strong>+10 to +50</strong> completion bonus</div>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 style="color: #ef4444; margin-bottom: 15px;">❌ Penalties</h3>
-                            <div style="color: #94a3b8; line-height: 2;">
-                                <div>⚠️ <strong>-2 to -10</strong> destructive actions</div>
-                                <div>📉 <strong>-1</strong> per 1% data loss</div>
-                                <div>🚫 <strong>-5</strong> schema violations</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  /* score cards */
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2.5rem; }
+  .score-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem 1.1rem; }
+  .score-card .lbl { font-size: 12px; color: #64748b; margin-bottom: 6px; }
+  .score-card .val { font-size: 24px; font-weight: 700; color: #38bdf8; }
 
-            <footer>
-                <p style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 20px;">
-                    Built for <strong style="color: #38bdf8;">Scalar x Meta Hackathon</strong>
-                </p>
-                <p style="color: #64748b;">
-                    Powered by FastAPI • Designed for AI/ML Research • Open Source
-                </p>
-            </footer>
-        </div>
+  /* curl */
+  .curl { background: #0a0f1a; border: 1px solid #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.9; overflow-x: auto; }
+  .cmd { color: #94a3b8; }
+  .flag { color: #818cf8; }
+  .str { color: #34d399; }
+  .cm { color: #334155; }
+</style>
+</head>
+<body>
+<div class="wrapper">
 
-        <script>
-            function copyCode(button, codeId) {
-                const code = document.getElementById('code-' + codeId).textContent;
-                navigator.clipboard.writeText(code).then(() => {
-                    button.textContent = '✅ Copied!';
-                    setTimeout(() => {
-                        button.textContent = '📋 Copy';
-                    }, 2000);
-                });
-            }
-        </script>
-    </body>
-    </html>
-    """
+  <div class="badge">Scalar &times; Meta Hackathon 2026</div>
+  <h1>🧹 OpenEnv <span>/</span> Data Cleaning Benchmark</h1>
+  <p class="tagline">A multi-step RL environment for evaluating LLM agents on structured CRM data cleaning — with dynamic reward shaping and three difficulty tiers.</p>
+  <div class="tag-row">
+    <span class="tag">reinforcement-learning</span>
+    <span class="tag">llm-agents</span>
+    <span class="tag">data-cleaning</span>
+    <span class="tag">crm</span>
+    <span class="tag">openenv</span>
+    <span class="tag">fastapi</span>
+    <span class="tag">benchmark</span>
+  </div>
+
+  <p class="section-label">What gets tested</p>
+  <div class="grid">
+    <div class="feat"><div class="feat-icon">🔧</div><h3>Missing value repair</h3><p>Dtype-aware fill — numeric, datetime, and text columns handled correctly.</p></div>
+    <div class="feat"><div class="feat-icon">🗂️</div><h3>Duplicate removal</h3><p>Exact-match deduplication without destroying valid unique records.</p></div>
+    <div class="feat"><div class="feat-icon">📅</div><h3>Date normalization</h3><p>Unify ISO, US, and natural-language formats into strict YYYY-MM-DD.</p></div>
+    <div class="feat"><div class="feat-icon">🔡</div><h3>Text standardization</h3><p>Strip whitespace, fix casing — title-case all name and label columns.</p></div>
+    <div class="feat"><div class="feat-icon">🏷️</div><h3>Category correction</h3><p>Replace invalid enum values with valid substitutes via fix_category.</p></div>
+    <div class="feat"><div class="feat-icon">📋</div><h3>Schema repair</h3><p>Rename columns with spaces or hyphens to clean snake_case identifiers.</p></div>
+  </div>
+
+  <p class="section-label">Agent loop</p>
+  <div class="pipeline">
+    <span class="step">POST /reset</span>
+    <span class="arrow">→</span>
+    <span class="step">Read Observation</span>
+    <span class="arrow">→</span>
+    <span class="step">POST /step</span>
+    <span class="arrow">→</span>
+    <span class="step">Receive Reward</span>
+    <span class="arrow">→</span>
+    <span class="step">Repeat ↺ / stop</span>
+  </div>
+  <p style="font-size:13px;color:#64748b;margin-bottom:2.5rem;">Each episode runs up to 20 steps. The agent receives a structured <code>Observation</code> (row preview, schema, detected issues, step count) and emits an <code>Action</code> (operation + optional column + value). The grader returns a shaped reward per step and a final <code>[0, 1]</code> score on episode end.</p>
+
+  <p class="section-label">API endpoints</p>
+  <div class="endpoints">
+    <div class="ep"><span class="method post">POST</span><div><div class="ep-path">/reset</div><div class="ep-desc">Load a task: <code>"easy"</code>, <code>"medium"</code>, or <code>"hard"</code>. Returns initial Observation with schema and detected issues.</div></div></div>
+    <div class="ep"><span class="method post">POST</span><div><div class="ep-path">/step</div><div class="ep-desc">Apply a cleaning action. Returns Observation, shaped Reward, done flag, and final score info on termination.</div></div></div>
+    <div class="ep"><span class="method get">GET</span><div><div class="ep-path">/state</div><div class="ep-desc">Current episode metadata — difficulty level, step count, done flag, dataframe shape.</div></div></div>
+    <div class="ep"><span class="method get">GET</span><div><div class="ep-path">/health</div><div class="ep-desc">Liveness check — returns <code>{"status": "ok"}</code>.</div></div></div>
+  </div>
+
+  <p class="section-label">Action space</p>
+  <div class="code-block">
+    <span class="op">fill_missing</span>     <span class="arg">column</span>=<span class="str">"age"</span>          <span class="arg">value</span>=<span class="str">"0"</span>            <span class="cmt"># fills NaN with dtype-cast value</span><br>
+    <span class="op">remove_duplicates</span>                                                   <span class="cmt"># drops exact duplicate rows</span><br>
+    <span class="op">standardize_date</span>  <span class="arg">column</span>=<span class="str">"Signup-Date"</span>                        <span class="cmt"># → YYYY-MM-DD</span><br>
+    <span class="op">normalize_text</span>    <span class="arg">column</span>=<span class="str">"First Name"</span>                         <span class="cmt"># strip + title-case</span><br>
+    <span class="op">rename_column</span>     <span class="arg">column</span>=<span class="str">"Cst_ID"</span>       <span class="arg">value</span>=<span class="str">"customer_id"</span>   <span class="cmt"># schema repair</span><br>
+    <span class="op">fix_category</span>      <span class="arg">column</span>=<span class="str">"status_cat"</span>  <span class="arg">value</span>=<span class="str">"UNKNOWN_STATUS:active"</span><br>
+    <span class="op">stop</span>                                                                  <span class="cmt"># terminate when clean</span>
+  </div>
+
+  <p class="section-label">Reward shaping</p>
+  <table class="rtable">
+    <thead><tr><th>Event</th><th>Reward</th></tr></thead>
+    <tbody>
+      <tr><td>Issue resolved (per issue fixed)</td><td><span class="pill pos">+0.25 each</span></td></tr>
+      <tr><td>Exact duplicates removed</td><td><span class="pill pos">+0.25</span></td></tr>
+      <tr><td>Valid stop — all issues resolved</td><td><span class="pill pos">+0.10</span></td></tr>
+      <tr><td>Minor state change</td><td><span class="pill neutral">+0.01</span></td></tr>
+      <tr><td>Repeated / useless action</td><td><span class="pill neg">−0.10</span></td></tr>
+      <tr><td>Consecutive repeat penalty</td><td><span class="pill neg">−0.05</span></td></tr>
+      <tr><td>Invalid operation</td><td><span class="pill neg">−0.10</span></td></tr>
+      <tr><td>Premature stop</td><td><span class="pill neg">−0.20</span></td></tr>
+      <tr><td>Excessive row loss (&gt;50%)</td><td><span class="pill neg">−0.50</span></td></tr>
+    </tbody>
+  </table>
+
+  <p class="section-label">Final score breakdown</p>
+  <div class="score-grid">
+    <div class="score-card"><div class="lbl">Null-free</div><div class="val">25%</div></div>
+    <div class="score-card"><div class="lbl">No duplicates</div><div class="val">25%</div></div>
+    <div class="score-card"><div class="lbl">Schema valid</div><div class="val">20%</div></div>
+    <div class="score-card"><div class="lbl">Dates clean</div><div class="val">15%</div></div>
+    <div class="score-card"><div class="lbl">Categories valid</div><div class="val">15%</div></div>
+  </div>
+  <p style="font-size:13px;color:#64748b;margin-bottom:2.5rem;">Score clamped to [0.0, 1.0]. Penalized by −0.50 if valid non-duplicate rows are lost during the episode.</p>
+
+  <p class="section-label">Quick start</p>
+  <div class="curl">
+    <span class="cm"># 1. Start a hard episode</span><br>
+    <span class="cmd">curl -X POST /reset</span> <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> <span class="flag">-d</span> <span class="str">'{"difficulty":"hard"}'</span><br><br>
+    <span class="cm"># 2. Apply a cleaning action</span><br>
+    <span class="cmd">curl -X POST /step</span>  <span class="flag">-H</span> <span class="str">"Content-Type: application/json"</span> <span class="flag">-d</span> <span class="str">'{"operation":"remove_duplicates"}'</span><br><br>
+    <span class="cm"># 3. Stop when all issues are resolved</span><br>
+    <span class="cmd">curl -X POST /step</span>  <span class="flag">-d</span> <span class="str">'{"operation":"stop"}'</span>
+  </div>
+
+</div>
+</body>
+</html>
+"""
 @app.get("/health")
 def health():
     return {"status": "ok"}
