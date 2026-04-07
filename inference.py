@@ -8,9 +8,10 @@ from env.cleaner_env import DataCleanerEnv
 from env.models import Action
 
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+# ✅ MUST use injected proxy variables
+API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+API_KEY = os.environ["API_KEY"]
 
 TASK_NAME = "hard"
 BENCHMARK = "data_cleaner"
@@ -20,7 +21,8 @@ MAX_STEPS = 10
 def get_action_from_llm(client: OpenAI, obs: dict) -> dict:
     """
     Deterministic heuristic-first policy with LLM fallback.
-    This gives stronger and reproducible benchmark baselines.
+    Ensures strong reproducible baseline while still making
+    real LiteLLM proxy API calls for Phase 2 validation.
     """
     issues = obs.get("detected_issues", [])
 
@@ -50,7 +52,7 @@ def get_action_from_llm(client: OpenAI, obs: dict) -> dict:
     if not issues:
         return {"operation": "stop"}
 
-    # ===== LLM fallback =====
+    # ===== mandatory LLM proxy call fallback =====
     prompt = f"""
 You are a data cleaning agent.
 
@@ -82,7 +84,12 @@ Allowed operations:
 
 
 def run_inference():
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    # ✅ MUST use API_KEY, not HF_TOKEN
+    client = OpenAI(
+        base_url=API_BASE_URL,
+        api_key=API_KEY
+    )
+
     env = DataCleanerEnv()
 
     rewards: List[float] = []
@@ -90,7 +97,6 @@ def run_inference():
     success = False
     info = {"score": 0.0}
 
-    # track completed action types
     completed_ops = set()
 
     print(
@@ -136,7 +142,6 @@ def run_inference():
                 flush=True
             )
 
-            # stop if no more issues
             if not obs_dict.get("detected_issues"):
                 done = True
 
@@ -154,6 +159,7 @@ def run_inference():
             f"rewards={rewards_str}",
             flush=True
         )
+
 
 if __name__ == "__main__":
     run_inference()
