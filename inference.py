@@ -13,7 +13,7 @@ API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 API_KEY = os.environ["API_KEY"]
 
-TASK_NAME = "hard"
+TASK_NAME = os.getenv("TASK_NAME", "hard")
 BENCHMARK = "data_cleaner"
 MAX_STEPS = 10
 
@@ -161,6 +161,7 @@ def run_inference():
         rewards_str = ",".join(f"{r:.2f}" for r in rewards)
         print(
             f"[END] success={str(success).lower()} "
+            f"score={final_score:.4f} "
             f"steps={steps_taken} "
             f"rewards={rewards_str}",
             flush=True
