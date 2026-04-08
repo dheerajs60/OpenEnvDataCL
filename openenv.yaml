@@ -4,7 +4,16 @@ description: Real-world data cleaning benchmark for AI agents
 entrypoint: server.app:main
 runtime: fastapi
 port: 8000
+
 tasks:
-  - easy
-  - medium
-  - hard
+  - id: easy
+    description: Fill missing values in a small clean tabular dataset
+    grader: env.graders.Grader
+
+  - id: medium
+    description: Resolve duplicate rows and normalize mixed date formats
+    grader: env.graders.Grader
+
+  - id: hard
+    description: Multi-step CRM data cleaning with nulls, duplicates, malformed dates, invalid categories, and schema issues
+    grader: env.graders.Grader
