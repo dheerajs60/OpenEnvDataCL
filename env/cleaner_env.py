@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Dict, Any
 
 from env.tasks import TASKS
-from env.graders import Grader
+from env.grader import Grader
 from env.models import Observation, Action, Reward
 
 
