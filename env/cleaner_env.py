@@ -56,23 +56,23 @@ class DataCleanerEnv:
             and self.grader is not None
         ):
             orig_issues = len(self.grader.detect_issues(self.orig_df))
-        curr_issues = len(self.grader.detect_issues(self.df))
+            curr_issues = len(self.grader.detect_issues(self.df))
 
-        if orig_issues > 0:
-            progress = 1 - (curr_issues / orig_issues)
-            score = 0.1 + 0.8 * progress
-        else:
-            score = 0.9
+            if orig_issues > 0:
+                progress = 1 - (curr_issues / orig_issues)
+                score = 0.1 + 0.8 * progress
+            else:
+                score = 0.9
 
-    score = float(max(0.01, min(0.99, score)))
+        score = float(max(0.01, min(0.99, score)))
 
-    return {
-        "task_difficulty": self.task_difficulty,
-        "step_count": self.step_count,
-        "done": self.done,
-        "df_shape": self.df.shape if self.df is not None else None,
-        "score": score,
-    }
+        return {
+            "task_difficulty": self.task_difficulty,
+            "step_count": self.step_count,
+            "done": self.done,
+            "df_shape": self.df.shape if self.df is not None else None,
+            "score": score,
+        }
 
     def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
         if self.done:
