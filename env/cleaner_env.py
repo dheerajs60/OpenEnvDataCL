@@ -60,7 +60,7 @@ class DataCleanerEnv:
             obs = self._get_obs()
             return (
                 obs,
-                Reward(score=0.0, reason="Episode already done"),
+                Reward(score=0.01, reason="Episode already done"),
                 True,
                 {"msg": "Episode already done"},
             )
@@ -161,10 +161,11 @@ class DataCleanerEnv:
 
         reward = Reward(score=reward_val, reason=reason)
 
-        info = {"score": 0.0}
+        info = {"score": 0.5}
         if self.done:
             info["score"] = self.grader.calculate_final_score(
-                self.orig_df, self.df
+                self.orig_df,
+                self.df
             )
 
         obs = self._get_obs()
