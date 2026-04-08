@@ -85,8 +85,10 @@ class Grader:
         curr_df: pd.DataFrame
     ) -> float:
 
+        # ===== issue sub-scores =====
         null_score = 1.0 if curr_df.isnull().sum().sum() == 0 else 0.0
         duplicate_score = 1.0 if curr_df.duplicated().sum() == 0 else 0.0
+
         schema_score = (
             1.0
             if sum(
@@ -110,18 +112,47 @@ class Grader:
                     date_issues_curr += 1
 
         date_score = 1.0 if date_issues_curr == 0 else 0.0
+
         category_score = (
             1.0
             if "UNKNOWN_STATUS" not in curr_df.values.flatten().tolist()
             else 0.0
         )
 
+        # ===== difficulty-aware grading =====
+        if self.task_difficulty == "easy":
+            weights = {
+                "null": 0.60,
+                "duplicate": 0.20,
+                "schema": 0.10,
+                "date": 0.05,
+                "category": 0.05,
+            }
+
+        elif self.task_difficulty == "medium":
+            weights = {
+                "null": 0.20,
+                "duplicate": 0.35,
+                "schema": 0.10,
+                "date": 0.25,
+                "category": 0.10,
+            }
+
+        else:  # hard
+            weights = {
+                "null": 0.25,
+                "duplicate": 0.25,
+                "schema": 0.20,
+                "date": 0.15,
+                "category": 0.15,
+            }
+
         score = (
-            null_score * 0.25
-            + duplicate_score * 0.25
-            + schema_score * 0.20
-            + date_score * 0.15
-            + category_score * 0.15
+            null_score * weights["null"]
+            + duplicate_score * weights["duplicate"]
+            + schema_score * weights["schema"]
+            + date_score * weights["date"]
+            + category_score * weights["category"]
         )
 
         # destructive final penalty
@@ -131,7 +162,12 @@ class Grader:
         if curr_valid < orig_valid:
             score -= 0.50
 
-        # ✅ strict open interval required by validator
-        score = max(0.01, min(0.99, float(score)))
+        # NaN safety
+        score = float(score)
+        if np.isnan(score):
+            score = 0.5
+
+        # strict validator-safe open interval
+        score = max(0.01, min(0.99, score))
 
         return score

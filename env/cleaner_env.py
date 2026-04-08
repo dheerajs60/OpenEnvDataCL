@@ -48,12 +48,27 @@ class DataCleanerEnv:
         )
 
     def state(self) -> Dict[str, Any]:
+        score = 0.5
+
+        if (
+            self.done
+            and self.orig_df is not None
+            and self.df is not None
+            and self.grader is not None
+        ):
+            score = self.grader.calculate_final_score(
+                self.orig_df,
+                self.df
+            )
+
+        score = float(max(0.01, min(0.99, score)))
         return {
-            "task_difficulty": self.task_difficulty,
-            "step_count": self.step_count,
-            "done": self.done,
-            "df_shape": self.df.shape if self.df is not None else None,
-        }
+        "task_difficulty": self.task_difficulty,
+        "step_count": self.step_count,
+        "done": self.done,
+        "df_shape": self.df.shape if self.df is not None else None,
+        "score": score,
+    }
 
     def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
         if self.done:
@@ -62,7 +77,10 @@ class DataCleanerEnv:
                 obs,
                 Reward(score=0.01, reason="Episode already done"),
                 True,
-                {"msg": "Episode already done"},
+                {
+                    "msg": "Episode already done",
+                    "score": 0.5
+                }
             )
 
         prev_df = self.df.copy()
@@ -162,11 +180,13 @@ class DataCleanerEnv:
         reward = Reward(score=reward_val, reason=reason)
 
         info = {"score": 0.5}
+
         if self.done:
-            info["score"] = self.grader.calculate_final_score(
+            final_score = self.grader.calculate_final_score(
                 self.orig_df,
                 self.df
             )
+            info["score"] = float(max(0.01, min(0.99, final_score)))
 
         obs = self._get_obs()
         return obs, reward, self.done, info
