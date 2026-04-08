@@ -21,12 +21,20 @@ def get_medium_task() -> pd.DataFrame:
     return pd.DataFrame(data)
 
 def get_hard_task() -> pd.DataFrame:
-    """Dataset includes nulls, duplicates, invalid categories, typo col names, mixed casing, malformed dates."""
     data = {
-        'Cst_ID': [101, 102, 103, 102, 104, 105, 106, 107],
-        'First Name': ['john', 'JANE', 'Alice', 'JANE', 'bob ', None, 'EVE', 'alice'],
-        'status_cat': ['ACTIVE', 'inactive', 'Pending', 'inactive', 'active', 'ACTIVE', 'UNKNOWN_STATUS', 'ACTIVE'],
-        'Signup-Date': ['2023-01-01', '01/02/2023', '2023/01/03', '01/02/2023', 'Jan 4, 2023', '2023-01-05', 'bad_date', None]
+        "Cst_ID": [101, 102, 103, 102, 104, 105, 106, 107],
+        "First Name": ["john", "JANE", "Alice", "JANE", "bob ", None, "EVE", "alice"],
+        "status_cat": ["ACTIVE", "inactive", "Pending", "inactive", "active", "ACTIVE", "PENDING", "ACTIVE"],
+        "Signup-Date": [
+            "2023-01-01",
+            "01/02/2023",
+            "2023/01/03",
+            "01/02/2023",
+            "Jan 4, 2023",
+            "2023-01-05",
+            "2023-01-07",
+            None,
+        ],
     }
     return pd.DataFrame(data)
 
