@@ -51,18 +51,22 @@ class DataCleanerEnv:
         score = 0.5
 
         if (
-            self.done
-            and self.orig_df is not None
+            self.orig_df is not None
             and self.df is not None
             and self.grader is not None
         ):
-            score = self.grader.calculate_final_score(
-                self.orig_df,
-                self.df
-            )
+            orig_issues = len(self.grader.detect_issues(self.orig_df))
+        curr_issues = len(self.grader.detect_issues(self.df))
 
-        score = float(max(0.01, min(0.99, score)))
-        return {
+        if orig_issues > 0:
+            progress = 1 - (curr_issues / orig_issues)
+            score = 0.1 + 0.8 * progress
+        else:
+            score = 0.9
+
+    score = float(max(0.01, min(0.99, score)))
+
+    return {
         "task_difficulty": self.task_difficulty,
         "step_count": self.step_count,
         "done": self.done,
