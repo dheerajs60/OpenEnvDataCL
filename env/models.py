@@ -1,6 +1,6 @@
 from typing import Any
 from openenv.core.env_server.types import Action as BaseAction, Observation as BaseObservation
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 class Observation(BaseObservation):
     rows_preview: list[dict] = Field(default_factory=list)
