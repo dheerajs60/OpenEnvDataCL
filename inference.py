@@ -128,17 +128,10 @@ def run_inference():
 
             action = Action(**action_dict)
 
-            # step() now returns a single Observation object per official OpenEnv protocol
-            step_result = env.step(action)
-            
-            # for backwards compatibility in this script, extract the fields
-            obs = step_result
-            reward = getattr(step_result, "reward", 0.0)
-            done = getattr(step_result, "done", False)
-            info = getattr(step_result, "metadata", {})
+            obs, reward, done, info = env.step(action)
             obs_dict = obs.model_dump()
 
-            reward_val = float(reward)
+            reward_val = float(reward.score)
             rewards.append(reward_val)
             steps_taken = step
 

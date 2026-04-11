@@ -7,11 +7,8 @@ from env.grader import Grader
 from env.models import Observation, Action, Reward
 
 
-from openenv.core.env_server.interfaces import Environment
-
-class DataCleanerEnv(Environment):
+class DataCleanerEnv:
     def __init__(self):
-        super().__init__()
         self.df: pd.DataFrame | None = None
         self.orig_df: pd.DataFrame | None = None
         self.task_difficulty: str | None = None
@@ -47,9 +44,7 @@ class DataCleanerEnv(Environment):
             rows_preview=rows_preview,
             table_schema=schema,
             detected_issues=issues,
-            step_count=self.step_count,
-            done=self.done,
-            reward=0.0
+            step_count=self.step_count
         )
 
     def state(self) -> Dict[str, Any]:
@@ -79,13 +74,18 @@ class DataCleanerEnv(Environment):
             "score": score,
         }
 
-    def step(self, action: Action) -> Observation:
+    def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
         if self.done:
             obs = self._get_obs()
-            obs.reward = 0.01
-            obs.done = True
-            obs.metadata["score"] = 0.5
-            return obs
+            return (
+                obs,
+                Reward(score=0.01, reason="Episode already done"),
+                True,
+                {
+                    "msg": "Episode already done",
+                    "score": 0.5
+                }
+            )
 
         prev_df = self.df.copy()
         self.step_count += 1
@@ -171,6 +171,8 @@ class DataCleanerEnv(Environment):
         # ensure reward is always in valid (0, 1) range
         reward_val = float(max(0.01, min(0.99, reward_val)))
 
+        reward = Reward(score=reward_val, reason=reason)
+
         info = {"score": 0.5}
 
         if self.done:
@@ -181,10 +183,4 @@ class DataCleanerEnv(Environment):
             info["score"] = float(max(0.01, min(0.99, final_score)))
 
         obs = self._get_obs()
-        obs.reward = reward_val
-        obs.done = self.done
-        
-        # we can still store info in metadata if needed, though create_app might not use it
-        obs.metadata["score"] = info.get("score", 0.5)
-
-        return obs
+        return obs, reward, self.done, info

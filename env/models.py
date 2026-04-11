@@ -1,14 +1,11 @@
-from pydantic import BaseModel, Field
-from openenv.core.env_server.types import Action as BaseAction, Observation as BaseObservation
+from pydantic import BaseModel, ConfigDict, Field
 
-class Observation(BaseObservation):
-    rows_preview: list = Field(default_factory=list)
-    table_schema: dict = Field(default_factory=dict)
-    detected_issues: list = Field(default_factory=list)
-    step_count: int = 0
-    metadata: dict = Field(default_factory=dict)
-
-class Action(BaseAction):
+class Observation(BaseModel):
+    rows_preview: list[dict]
+    table_schema: dict
+    detected_issues: list[str]
+    step_count: int
+class Action(BaseModel):
     operation: str
     column: str | None = None
     value: str | None = None

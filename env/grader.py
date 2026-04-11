@@ -1,63 +1,24 @@
 import pandas as pd
 import numpy as np
-from typing import Any
 
-try:
-    from openenv.core.rubrics.base import Rubric
-except ImportError:
-    # Fallback for environments where openenv-core is not installed
-    class Rubric:
-        def __init__(self): pass
-        def __call__(self, action, observation): return self.forward(action, observation)
 
-class Grader(Rubric):
-    def __init__(self, task_difficulty: str = "easy", task_id: str = None, **kwargs):
-        super().__init__()
-        # Priority: task_id passed by validator, then grader_kwargs difficulty
-        self.task_difficulty = task_id or task_difficulty or "easy"
-        print(f"[DEBUG] Grader initialized for task: {self.task_difficulty}")
+class Grader:
+    def __init__(self, task_difficulty: str = "easy"):
+        self.task_difficulty = task_difficulty
 
-    def forward(self, action: Any = None, observation: Any = None) -> float:
-        """Standard OpenEnv rubric entry point. Robustly handles both objects and dicts."""
-        # Derive a basic score from detected issues
-        try:
-            # Handle observation being an object with detected_issues or a dict
-            if hasattr(observation, "detected_issues"):
-                issues = observation.detected_issues
-            elif isinstance(observation, dict):
-                issues = observation.get("detected_issues", [])
-            else:
-                issues = []
-                
-            if not issues:
-                return 0.99
-            score = max(0.01, 0.99 - (len(issues) * 0.1))
-            return float(score)
-        except Exception:
-            return 0.5
+    def forward(self, action, observation) -> float:
+        """Standard OpenEnv rubric entry point."""
+        # Derive a basic score from detected issues in the observation
+        issues = observation.detected_issues if hasattr(observation, "detected_issues") else []
+        if not issues:
+            return 0.99
+        # Basic inverse relationship: more issues = lower score
+        score = max(0.01, 0.99 - (len(issues) * 0.1))
+        return float(score)
 
-    def grade(self, *args, **kwargs) -> float:
-        """Resilient grade method for Phase 2 deep validation."""
-        # Handle various signatures: grade(task_id, state) or grade(state)
-        state = None
-        if len(args) == 2:
-            state = args[1]
-        elif len(args) == 1:
-            state = args[0]
-        elif "state" in kwargs:
-            state = kwargs["state"]
-            
-        # Extract score from state (object or dict)
-        try:
-            if hasattr(state, "metadata"):
-                score = state.metadata.get("score", 0.5)
-            elif isinstance(state, dict):
-                score = state.get("score", state.get("reward", 0.5))
-            else:
-                score = 0.5
-            return max(0.01, min(0.99, float(score)))
-        except Exception:
-            return 0.5
+    def grade(self, task_id: str, state: dict) -> float:
+        score = state.get("score", 0.5)
+        return max(0.01, min(0.99, float(score)))
 
     def generate_schema(self, df: pd.DataFrame) -> dict:
         return {str(col): str(dtype) for col, dtype in df.dtypes.items()}
