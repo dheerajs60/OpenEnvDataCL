@@ -1,14 +1,17 @@
 import random
 import pandas as pd
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from env.tasks import TASKS
 from env.grader import Grader
-from env.models import Observation, Action, Reward
+from env.models import Observation, Action
+from openenv.core.env_server.interfaces import Environment
+from openenv.core.env_server.types import EnvironmentMetadata
 
 
-class DataCleanerEnv:
+class DataCleanerEnv(Environment[Action, Observation, Any]):
     def __init__(self):
+        super().__init__()
         self.df: pd.DataFrame | None = None
         self.orig_df: pd.DataFrame | None = None
         self.task_difficulty: str | None = None
@@ -16,9 +19,22 @@ class DataCleanerEnv:
         self.step_count: int = 0
         self.max_steps: int = 20
         self.done: bool = False
-        self.last_action: dict | None = None
+        self.last_action: Any | None = None
 
-    def reset(self, difficulty: str = None) -> Observation:
+    def get_metadata(self) -> EnvironmentMetadata:
+        return EnvironmentMetadata(
+            name="data_cleaner_env",
+            description="Real-world data cleaning benchmark for AI agents",
+            version="1.0.0"
+        )
+
+    def reset(
+        self,
+        seed: Optional[int] = None,
+        episode_id: Optional[str] = None,
+        difficulty: str = None,
+        **kwargs: Any,
+    ) -> Observation:
         if difficulty not in TASKS:
             difficulty = random.choice(list(TASKS.keys()))
 
@@ -47,9 +63,9 @@ class DataCleanerEnv:
             step_count=self.step_count
         )
 
-    def state(self) -> Dict[str, Any]:
+    @property
+    def state(self) -> Any:
         score = 0.5
-
         if (
             self.orig_df is not None
             and self.df is not None
@@ -74,18 +90,17 @@ class DataCleanerEnv:
             "score": score,
         }
 
-    def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
+    def step(
+        self,
+        action: Action,
+        timeout_s: Optional[float] = None,
+        **kwargs: Any,
+    ) -> Observation:
         if self.done:
             obs = self._get_obs()
-            return (
-                obs,
-                Reward(score=0.01, reason="Episode already done"),
-                True,
-                {
-                    "msg": "Episode already done",
-                    "score": 0.5
-                }
-            )
+            obs.reward = 0.01
+            obs.done = True
+            return obs
 
         prev_df = self.df.copy()
         self.step_count += 1
@@ -94,51 +109,31 @@ class DataCleanerEnv:
         col = action.column
         val = action.value
 
-        invalid_action = False
-
-        # repeated action penalty
-        repeat_penalty = 0.0
         current_action = action.model_dump()
-
-        if self.last_action == current_action:
-            repeat_penalty = 0.0  # penalties handled via small positive rewards in grader
-
         self.last_action = current_action
 
         try:
-            # ✅ improved dtype-aware fill_missing
             if op == "fill_missing" and col in self.df.columns and val is not None:
+                col_dtype = self.df[col].dtype
                 try:
-                    col_dtype = self.df[col].dtype
-
                     if pd.api.types.is_numeric_dtype(col_dtype):
                         cast_val = float(val)
                     elif pd.api.types.is_datetime64_any_dtype(col_dtype):
                         cast_val = pd.to_datetime(val, errors="coerce")
                     else:
                         cast_val = str(val)
-
                     self.df[col] = self.df[col].fillna(cast_val)
-
-                except Exception:
+                except:
                     self.df[col] = self.df[col].fillna(str(val))
 
             elif op == "remove_duplicates":
                 self.df = self.df.drop_duplicates()
 
             elif op == "standardize_date" and col in self.df.columns:
-                self.df[col] = (
-                    pd.to_datetime(self.df[col], errors="coerce")
-                    .dt.strftime("%Y-%m-%d")
-                )
+                self.df[col] = pd.to_datetime(self.df[col], errors="coerce").dt.strftime("%Y-%m-%d")
 
             elif op == "normalize_text" and col in self.df.columns:
-                self.df[col] = (
-                    self.df[col]
-                    .astype(str)
-                    .str.strip()
-                    .str.title()
-                )
+                self.df[col] = self.df[col].astype(str).str.strip().str.title()
 
             elif op == "rename_column" and col in self.df.columns and val is not None:
                 self.df = self.df.rename(columns={col: val})
@@ -147,40 +142,25 @@ class DataCleanerEnv:
                 if ":" in val:
                     old_c, new_c = val.split(":", 1)
                     self.df[col] = self.df[col].replace(old_c, new_c)
-                else:
-                    invalid_action = True
 
             elif op == "stop":
                 self.done = True
 
-            else:
-                invalid_action = True
-
         except Exception:
-            invalid_action = True
+            pass
 
         if self.step_count >= self.max_steps:
             self.done = True
 
-        reward_val, reason = self.grader.grade_step(
-            prev_df, self.df, current_action
-        )
-
-        reward_val += repeat_penalty
-        
-        # ensure reward is always in valid (0, 1) range
+        reward_val, reason = self.grader.grade_step(prev_df, self.df, current_action)
         reward_val = float(max(0.01, min(0.99, reward_val)))
 
-        reward = Reward(score=reward_val, reason=reason)
-
-        info = {"score": 0.5}
-
         if self.done:
-            final_score = self.grader.calculate_final_score(
-                self.orig_df,
-                self.df
-            )
-            info["score"] = float(max(0.01, min(0.99, final_score)))
+            final_score = self.grader.calculate_final_score(self.orig_df, self.df)
+            # Maybe store final score in info if we had it, but for now we rely on reward
+            # Rubric protocol typically uses the reward field for current step evaluation
 
         obs = self._get_obs()
-        return obs, reward, self.done, info
+        obs.reward = reward_val
+        obs.done = self.done
+        return obs
