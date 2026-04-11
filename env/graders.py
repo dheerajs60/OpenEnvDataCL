@@ -2,9 +2,28 @@ import pandas as pd
 import numpy as np
 
 
-class Grader:
+try:
+    from openenv.core.rubrics.base import Rubric
+except ImportError:
+    # Fallback for environments where openenv-core is not installed
+    class Rubric:
+        def __init__(self): pass
+        def __call__(self, action, observation): return self.forward(action, observation)
+
+class Grader(Rubric):
     def __init__(self, task_difficulty: str = "easy"):
+        super().__init__()
         self.task_difficulty = task_difficulty
+
+    def forward(self, action, observation) -> float:
+        """Standard OpenEnv rubric entry point."""
+        # Derive a basic score from detected issues in the observation
+        issues = observation.detected_issues if hasattr(observation, "detected_issues") else []
+        if not issues:
+            return 0.99
+        # Basic inverse relationship: more issues = lower score
+        score = max(0.01, 0.99 - (len(issues) * 0.1))
+        return float(score)
 
     def grade(self, task_id: str, state: dict) -> float:
         score = state.get("score", 0.5)
