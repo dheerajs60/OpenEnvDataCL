@@ -225,7 +225,7 @@ def root():
 """
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "healthy"}
 import uvicorn
 def main():
     uvicorn.run(app, host="0.0.0.0", port=8000)
