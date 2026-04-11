@@ -1,2 +1,6 @@
-# OpenEnv models entrypoint
-from env.models import *
+try:
+    from env.models import Action, Observation, Reward
+except ImportError:
+    from models import Action, Observation, Reward
+
+__all__ = ["Action", "Observation", "Reward"]

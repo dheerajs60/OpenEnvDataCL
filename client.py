@@ -1,11 +1,8 @@
-# OpenEnv client entrypoint
-import sys
-from pathlib import Path
-
-# Add project root to sys.path for internal imports
-sys.path.append(str(Path(__file__).parent))
+from openenv.core.client import EnvClient
 
 try:
-    from inference import *
+    from .models import Action, Observation
 except ImportError:
-    pass
+    from models import Action, Observation
+
+DataCleanerClient = EnvClient[Action, Observation, dict]

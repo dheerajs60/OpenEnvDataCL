@@ -7,8 +7,11 @@ from env.grader import Grader
 from env.models import Observation, Action, Reward
 
 
-class DataCleanerEnv:
+from openenv.core.env_server.interfaces import Environment
+
+class DataCleanerEnv(Environment):
     def __init__(self):
+        super().__init__()
         self.df: pd.DataFrame | None = None
         self.orig_df: pd.DataFrame | None = None
         self.task_difficulty: str | None = None
