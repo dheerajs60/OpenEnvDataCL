@@ -15,9 +15,12 @@ except (ImportError, ValueError):
         from env.models import Action, Observation
         from env.cleaner_env import DataCleanerEnv
 
+# Global singleton instance for state persistence
+_global_env = DataCleanerEnv()
+
 # Create the app with web interface and README integration
 app = create_app(
-    DataCleanerEnv,
+    lambda: _global_env,  # singleton factory
     Action,
     Observation,
     env_name="data_cleaner_env",

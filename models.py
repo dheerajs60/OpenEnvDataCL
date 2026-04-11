@@ -1,5 +1,5 @@
 try:
-    from env.models import Action, Observation, Reward
+    from .env.models import Action, Observation, Reward
 except ImportError:
     from models import Action, Observation, Reward
 

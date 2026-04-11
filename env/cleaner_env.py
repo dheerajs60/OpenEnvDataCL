@@ -47,7 +47,9 @@ class DataCleanerEnv(Environment):
             rows_preview=rows_preview,
             table_schema=schema,
             detected_issues=issues,
-            step_count=self.step_count
+            step_count=self.step_count,
+            done=self.done,
+            reward=0.0
         )
 
     def state(self) -> Dict[str, Any]:
@@ -174,8 +176,6 @@ class DataCleanerEnv(Environment):
         # ensure reward is always in valid (0, 1) range
         reward_val = float(max(0.01, min(0.99, reward_val)))
 
-        reward = Reward(score=reward_val, reason=reason)
-
         info = {"score": 0.5}
 
         if self.done:
@@ -186,4 +186,10 @@ class DataCleanerEnv(Environment):
             info["score"] = float(max(0.01, min(0.99, final_score)))
 
         obs = self._get_obs()
-        return obs, reward, self.done, info
+        obs.reward = reward_val
+        obs.done = self.done
+        
+        # we can still store info in metadata if needed, though create_app might not use it
+        obs.metadata["score"] = info.get("score", 0.5)
+
+        return obs
