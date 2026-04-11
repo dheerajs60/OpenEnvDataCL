@@ -14,7 +14,7 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 API_KEY = os.environ["API_KEY"]
 
 TASK_NAME = os.getenv("TASK_NAME", "hard")
-BENCHMARK = "data_cleaner"
+BENCHMARK = "data_cleaner_env"
 MAX_STEPS = 10
 
 

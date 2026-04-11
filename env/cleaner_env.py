@@ -101,7 +101,7 @@ class DataCleanerEnv:
         current_action = action.model_dump()
 
         if self.last_action == current_action:
-            repeat_penalty = -0.05
+            repeat_penalty = 0.0  # penalties handled via small positive rewards in grader
 
         self.last_action = current_action
 
@@ -167,19 +167,9 @@ class DataCleanerEnv:
         )
 
         reward_val += repeat_penalty
-        if repeat_penalty < 0:
-            reason += " | repeated_action_penalty"
-
-        if invalid_action:
-            reward_val -= 0.1
-            reason += " | invalid_action_penalty"
-
-        row_loss_ratio = 1 - (len(self.df) / max(len(prev_df), 1))
-        if row_loss_ratio > 0.5:
-            reward_val -= 0.3
-            reason += " | excessive_row_loss"
-
-        reward_val = max(min(reward_val, 1.0), -1.0)
+        
+        # ensure reward is always in valid (0, 1) range
+        reward_val = float(max(0.01, min(0.99, reward_val)))
 
         reward = Reward(score=reward_val, reason=reason)
 

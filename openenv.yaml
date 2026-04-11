@@ -1,8 +1,8 @@
 spec_version: 1
 name: data_cleaner_env
-description: Real-world data cleaning benchmark for AI agents
-entrypoint: server.app:main
+type: space
 runtime: fastapi
+app: server.app:app
 port: 8000
 tasks:
   - id: easy

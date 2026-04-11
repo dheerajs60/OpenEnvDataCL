@@ -56,30 +56,30 @@ class Grader:
             curr_valid = len(curr_df) - curr_df.duplicated().sum()
 
             if prev_valid == curr_valid:
-                return 0.25, "Removed exact duplicates"
+                return 0.20, "Removed exact duplicates"
             else:
                 if len(curr_df) < len(prev_df) * 0.5:
-                    return -0.50, "Destructive row deletion (>50%)"
-                return -0.30, "Destructive row deletion"
+                    return 0.01, "Destructive row deletion (>50%)"
+                return 0.05, "Destructive row deletion"
 
         # repeated no-op
         if prev_df.equals(curr_df) and action.get("operation") != "stop":
-            return -0.10, "Repeated/useless action"
+            return 0.02, "Repeated/useless action"
 
         prev_issues = len(self.detect_issues(prev_df))
         curr_issues = len(self.detect_issues(curr_df))
 
         if curr_issues < prev_issues:
-            return 0.25 * (prev_issues - curr_issues), "Fixed data issue(s)"
+            return 0.20 * (prev_issues - curr_issues), "Fixed data issue(s)"
 
         elif curr_issues > prev_issues:
-            return -0.20, "Introduced new data issues"
+            return 0.02, "Introduced new data issues"
 
         if action.get("operation") == "stop":
             if curr_issues == 0:
-                return 0.10, "Valid stop action"
+                return 0.15, "Valid stop action"
             else:
-                return -0.20, "Premature stop with unresolved issues"
+                return 0.01, "Premature stop with unresolved issues"
 
         return 0.01, "Minor state change"
 
