@@ -79,18 +79,13 @@ class DataCleanerEnv(Environment):
             "score": score,
         }
 
-    def step(self, action: Action) -> tuple[Observation, Reward, bool, dict]:
+    def step(self, action: Action) -> Observation:
         if self.done:
             obs = self._get_obs()
-            return (
-                obs,
-                Reward(score=0.01, reason="Episode already done"),
-                True,
-                {
-                    "msg": "Episode already done",
-                    "score": 0.5
-                }
-            )
+            obs.reward = 0.01
+            obs.done = True
+            obs.metadata["score"] = 0.5
+            return obs
 
         prev_df = self.df.copy()
         self.step_count += 1

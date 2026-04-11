@@ -11,9 +11,12 @@ except ImportError:
         def __call__(self, action, observation): return self.forward(action, observation)
 
 class Grader(Rubric):
-    def __init__(self, task_difficulty: str = "easy"):
+    def __init__(self, task_difficulty: str = "easy", task_id: str = None, **kwargs):
         super().__init__()
-        self.task_difficulty = task_difficulty
+        if task_id is not None and task_difficulty == "easy":
+            self.task_difficulty = task_id
+        else:
+            self.task_difficulty = task_difficulty
 
     def forward(self, action, observation) -> float:
         """Standard OpenEnv rubric entry point."""
