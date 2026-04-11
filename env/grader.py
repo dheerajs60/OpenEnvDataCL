@@ -86,3 +86,8 @@ class Grader:
             score = 0.5
         score = max(0.01, min(0.99, score))
         return score
+TASK_GRADERS = {
+    "easy": Grader,
+    "medium": Grader,
+    "hard": Grader,
+}
