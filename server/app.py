@@ -1,26 +1,15 @@
-try:
-    from openenv.core.env_server.http_server import create_app
-    from ..models import Action, Observation
-    from ..env.cleaner_env import DataCleanerEnv
-except (ImportError, ValueError):
-    try:
-        from openenv.core.env_server.http_server import create_app
-        from models import Action, Observation
-        from env.cleaner_env import DataCleanerEnv
-    except ImportError:
-        import sys
-        import os
-        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        from openenv.core.env_server.http_server import create_app
-        from env.models import Action, Observation
-        from env.cleaner_env import DataCleanerEnv
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Global singleton instance for state persistence
+from openenv.core.env_server.http_server import create_app
+from env.models import Action, Observation
+from env.cleaner_env import DataCleanerEnv
+
 _global_env = DataCleanerEnv()
 
-# Create the app with web interface and README integration
 app = create_app(
-    lambda: _global_env,  # singleton factory
+    lambda: _global_env,
     Action,
     Observation,
     env_name="data_cleaner_env",

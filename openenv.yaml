@@ -5,17 +5,17 @@ runtime: fastapi
 app: server.app:app
 port: 8000
 tasks:
-  easy:
+  - id: easy
     description: "Fill missing values in a small clean tabular dataset"
     grader: env.grader.Grader
     grader_kwargs:
       task_id: easy
-  medium:
+  - id: medium
     description: "Resolve duplicate rows and normalize mixed date formats"
     grader: env.grader.Grader
     grader_kwargs:
       task_id: medium
-  hard:
+  - id: hard
     description: "Multi-step CRM data cleaning with nulls, duplicates, malformed dates, and schema issues"
     grader: env.grader.Grader
     grader_kwargs:
