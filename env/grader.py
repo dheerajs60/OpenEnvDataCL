@@ -1,48 +1,25 @@
 import pandas as pd
 import numpy as np
 
-try:
-    from openenv.core.rubrics.base import Rubric
-    _base = Rubric
-except ImportError:
-    _base = object
-
-class Grader(_base):
-    def __init__(self, task_difficulty: str = "easy", task_id: str = None, **kwargs):
-        if _base is not object:
-            super().__init__()
+class Grader:
+    def __init__(self, task_difficulty="easy", task_id=None, **kwargs):
         self.task_difficulty = task_id if task_id else task_difficulty
 
-    def forward(self, action=None, observation=None) -> float:
+    def forward(self, action=None, observation=None):
         try:
-            if hasattr(observation, "detected_issues"):
-                issues = observation.detected_issues
-            elif isinstance(observation, dict):
-                issues = observation.get("detected_issues", [])
-            else:
-                issues = []
+            issues = getattr(observation, "detected_issues", None) or (observation or {}).get("detected_issues", [])
             if not issues:
                 return 0.99
-            return max(0.01, 0.99 - (len(issues) * 0.1))
+            return max(0.01, 0.99 - len(issues) * 0.1)
         except Exception:
             return 0.5
 
-    def grade(self, *args, **kwargs) -> float:
-        state = None
-        if len(args) == 2:
-            state = args[1]
-        elif len(args) == 1:
-            state = args[0]
-        elif "state" in kwargs:
-            state = kwargs["state"]
+    def grade(self, *args, **kwargs):
         try:
-            if hasattr(state, "metadata"):
-                score = state.metadata.get("score", 0.5)
-            elif isinstance(state, dict):
-                score = state.get("score", 0.5)
-            else:
-                score = 0.5
-            return max(0.01, min(0.99, float(score)))
+            state = args[1] if len(args) == 2 else args[0] if len(args) == 1 else kwargs.get("state", {})
+            if isinstance(state, dict):
+                return max(0.01, min(0.99, float(state.get("score", 0.5))))
+            return 0.5
         except Exception:
             return 0.5
 
