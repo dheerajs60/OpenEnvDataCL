@@ -1,19 +1,24 @@
 spec_version: 1
 name: data_cleaner_env
 description: Real-world data cleaning benchmark for AI agents
-entrypoint: server.app:main
+type: fastapi
 runtime: fastapi
+app: server.app:app
 port: 8000
 
 tasks:
   - id: easy
     description: Fill missing values in a simple customer dataset
     grader: env.grader.Grader
-
+    grader_kwargs:
+      task_id: easy
   - id: medium
     description: Remove duplicates and normalize mixed date formats
     grader: env.grader.Grader
-
+    grader_kwargs:
+      task_id: medium
   - id: hard
     description: Multi-step CRM cleanup with nulls, duplicates, malformed dates, invalid categories, and schema issues
     grader: env.grader.Grader
+    grader_kwargs:
+      task_id: hard
