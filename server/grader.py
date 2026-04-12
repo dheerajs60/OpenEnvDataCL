@@ -1,6 +1,6 @@
 """
-env/grader.py
-=============
+server/grader.py
+================
 Three distinct per-task graders (EasyGrader, MediumGrader, HardGrader).
 
 Each grader:
@@ -8,18 +8,13 @@ Each grader:
   - Implements grade(self, state: dict) -> dict  (required OpenEnv interface)
   - Implements __call__ so grader(state) works too
   - Returns {"score": float, "reason": str, "details": dict}
-  - Lazy-imports pandas/numpy so the class is importable in any environment
+  - grade() NEVER raises — handles None/empty state gracefully
 """
 
 from __future__ import annotations
 
 
-# ---------------------------------------------------------------------------
-# Shared helpers (no top-level pandas/numpy to keep import fast)
-# ---------------------------------------------------------------------------
-
 def _detect_issues(df) -> list[str]:
-    """Return a list of data quality issues found in df."""
     import pandas as pd
     issues: list[str] = []
     if df.isnull().sum().sum() > 0:
@@ -72,7 +67,6 @@ def _calculate_final_score(orig_df, curr_df, weights: dict) -> tuple[float, dict
         + category_score  * weights["category"]
     )
 
-    # penalise if valid rows were lost
     orig_valid = len(orig_df) - orig_df.duplicated().sum()
     curr_valid = len(curr_df) - curr_df.duplicated().sum()
     if curr_valid < orig_valid:
@@ -93,13 +87,7 @@ def _calculate_final_score(orig_df, curr_df, weights: dict) -> tuple[float, dict
     return score, details
 
 
-def _grade_step(
-    grader_instance,
-    prev_df,
-    curr_df,
-    action: dict,
-) -> tuple[float, str]:
-    """Shared step-reward logic used by all graders."""
+def _grade_step(grader_instance, prev_df, curr_df, action: dict) -> tuple[float, str]:
     if len(curr_df) < len(prev_df):
         prev_valid = len(prev_df) - prev_df.duplicated().sum()
         curr_valid = len(curr_df) - curr_df.duplicated().sum()
@@ -129,20 +117,13 @@ def _grade_step(
     return 0.01, "Minor state change (no issue resolved)"
 
 
-# ---------------------------------------------------------------------------
-# Base grader (shared logic, not exposed in openenv.yaml directly)
-# ---------------------------------------------------------------------------
-
 class _BaseGrader:
     """
     Base class for all DataCL task graders.
-
-    OpenEnv calls:
-        grader = GraderClass()          # no-arg constructor
-        result = grader.grade(state)    # state is the dict from /state
+    OpenEnv calls grader = GraderClass()  then  result = grader.grade(state).
+    grade() must NEVER raise — always return a valid score dict.
     """
 
-    # subclasses override this
     DIFFICULTY: str = "easy"
     WEIGHTS: dict = {
         "null": 0.40, "duplicate": 0.30,
@@ -150,58 +131,46 @@ class _BaseGrader:
     }
 
     def __init__(self):
-        pass  # no required args — OpenEnv instantiates with no args
-
-    # ------------------------------------------------------------------
-    # Required OpenEnv interface
-    # ------------------------------------------------------------------
+        pass
 
     def grade(self, state: dict) -> dict:
         """
-        Grade a completed episode.
-
-        Parameters
-        ----------
-        state : dict
-            The dict returned by GET /state.  Must contain at least {"score": float}.
-
-        Returns
-        -------
-        dict  {"score": float, "reason": str, "details": dict}
+        Grade a completed episode. Accepts None or empty dict gracefully.
+        Always returns {"score": float, "reason": str, "details": dict}.
         """
-        raw_score = state.get("score", 0.5)
+        # Normalise state — never crash on bad input
+        if state is None:
+            state = {}
+        if not isinstance(state, dict):
+            try:
+                state = dict(state)
+            except Exception:
+                state = {}
+
         try:
+            raw_score = state.get("score", 0.5)
             score = float(max(0.01, min(0.99, float(raw_score))))
         except (TypeError, ValueError):
             score = 0.5
 
-        reason = self._score_to_reason(score)
-        return {"score": score, "reason": reason, "details": state}
+        return {
+            "score": score,
+            "reason": self._score_to_reason(score),
+            "details": state,
+            "grader": self.__class__.__name__,
+            "difficulty": self.DIFFICULTY,
+        }
 
     def __call__(self, state: dict) -> dict:
         return self.grade(state)
 
-    # ------------------------------------------------------------------
-    # Higher-fidelity grading when we have the full DataFrames
-    # ------------------------------------------------------------------
-
     def grade_episode(self, orig_df, final_df) -> dict:
-        """
-        Compute a detailed score for a completed episode.
-        Used internally by the environment when done=True.
-        """
         score, details = _calculate_final_score(orig_df, final_df, self.WEIGHTS)
-        reason = self._score_to_reason(score)
-        return {"score": score, "reason": reason, "details": details}
+        return {"score": score, "reason": self._score_to_reason(score), "details": details}
 
     def grade_step(self, prev_df, curr_df, action: dict) -> tuple[float, str]:
-        """Per-step shaped reward.  Returns (reward_float, reason_str)."""
         reward, reason = _grade_step(self, prev_df, curr_df, action)
         return float(max(0.01, min(0.99, reward))), reason
-
-    # ------------------------------------------------------------------
-    # Schema / issue helpers (used by cleaner_env.py)
-    # ------------------------------------------------------------------
 
     def generate_schema(self, df) -> dict:
         return _generate_schema(df)
@@ -212,10 +181,6 @@ class _BaseGrader:
     def calculate_final_score(self, orig_df, curr_df) -> float:
         score, _ = _calculate_final_score(orig_df, curr_df, self.WEIGHTS)
         return score
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _score_to_reason(score: float) -> str:
@@ -230,73 +195,32 @@ class _BaseGrader:
         return "Failed: minimal progress"
 
 
-# ---------------------------------------------------------------------------
-# Task-specific graders (each registered in openenv.yaml)
-# ---------------------------------------------------------------------------
-
 class EasyGrader(_BaseGrader):
-    """
-    Grader for the **easy** task:
-    Fill missing values in a simple customer dataset.
-
-    Scoring weights: null-handling is the primary skill tested.
-    """
     DIFFICULTY = "easy"
     WEIGHTS = {
-        "null":      0.60,
-        "duplicate": 0.20,
-        "schema":    0.10,
-        "date":      0.05,
-        "category":  0.05,
+        "null": 0.60, "duplicate": 0.20,
+        "schema": 0.10, "date": 0.05, "category": 0.05,
     }
 
 
 class MediumGrader(_BaseGrader):
-    """
-    Grader for the **medium** task:
-    Remove duplicates and normalise mixed date formats.
-
-    Scoring weights: duplicate removal and date normalisation are primary.
-    """
     DIFFICULTY = "medium"
     WEIGHTS = {
-        "null":      0.20,
-        "duplicate": 0.35,
-        "schema":    0.10,
-        "date":      0.25,
-        "category":  0.10,
+        "null": 0.20, "duplicate": 0.35,
+        "schema": 0.10, "date": 0.25, "category": 0.10,
     }
 
 
 class HardGrader(_BaseGrader):
-    """
-    Grader for the **hard** task:
-    Multi-step CRM cleanup — nulls, duplicates, malformed dates,
-    invalid categories, and schema issues.
-
-    Scoring weights: balanced across all five quality dimensions.
-    """
     DIFFICULTY = "hard"
     WEIGHTS = {
-        "null":      0.25,
-        "duplicate": 0.25,
-        "schema":    0.20,
-        "date":      0.15,
-        "category":  0.15,
+        "null": 0.25, "duplicate": 0.25,
+        "schema": 0.20, "date": 0.15, "category": 0.15,
     }
 
 
-# ---------------------------------------------------------------------------
-# Legacy alias (keeps cleaner_env.py working without changes)
-# ---------------------------------------------------------------------------
-
 class Grader(_BaseGrader):
-    """
-    Legacy alias kept for backward compatibility.
-    Accepts an optional task_difficulty kwarg so existing callers
-    (cleaner_env.py) still work: Grader("easy"), Grader("hard"), etc.
-    """
-
+    """Legacy alias — keeps environment.py working without changes."""
     _WEIGHTS_BY_DIFF = {
         "easy":   EasyGrader.WEIGHTS,
         "medium": MediumGrader.WEIGHTS,
@@ -306,6 +230,4 @@ class Grader(_BaseGrader):
     def __init__(self, task_difficulty: str = "easy"):
         super().__init__()
         self.DIFFICULTY = task_difficulty
-        self.WEIGHTS = self._WEIGHTS_BY_DIFF.get(
-            task_difficulty, EasyGrader.WEIGHTS
-        )
+        self.WEIGHTS = self._WEIGHTS_BY_DIFF.get(task_difficulty, EasyGrader.WEIGHTS)

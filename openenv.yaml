@@ -6,7 +6,7 @@ description: >
   each graded by a dedicated scorer that measures null-handling, duplicate
   removal, date normalisation, schema repair, and category correction.
 
-entrypoint: server.app:main
+entrypoint: server.app:app
 runtime: fastapi
 port: 8000
 
@@ -16,12 +16,16 @@ tasks:
       Fill missing values in a simple 5-row customer dataset.
       Tests dtype-aware imputation (numeric and text columns).
     grader: server.grader.EasyGrader
+    grader_class: EasyGrader
+    grader_module: server.grader
 
   - name: medium
     description: >
       Remove exact duplicate rows and normalise mixed date formats
       (ISO, US slash, natural-language) to strict YYYY-MM-DD.
     grader: server.grader.MediumGrader
+    grader_class: MediumGrader
+    grader_module: server.grader
 
   - name: hard
     description: >
@@ -29,3 +33,5 @@ tasks:
       dates, correct invalid enum values, and rename columns with illegal
       characters to valid snake_case identifiers.
     grader: server.grader.HardGrader
+    grader_class: HardGrader
+    grader_module: server.grader
