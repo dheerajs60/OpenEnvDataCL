@@ -118,11 +118,12 @@ def get_state():
 
 @app.get("/tasks")
 def list_tasks():
-    """
-    Returns all 3 tasks with grader class paths.
-    Required by OpenEnv Phase 2 validator.
-    """
-    return TASK_META
+    action_schema = {
+        "operation": "string — e.g. fill_missing, remove_duplicates, standardize_date",
+        "column": "string (optional) — target column",
+        "value": "string (optional) — value parameter",
+    }
+    return {"tasks": TASK_META, "action_schema": action_schema}
 
 
 @app.get("/tasks/{task_id}")
