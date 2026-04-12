@@ -31,9 +31,6 @@ TASK_META = [
             "Fill missing values in a simple 5-row customer dataset. "
             "Tests dtype-aware imputation (numeric and text columns)."
         ),
-        "grader": "server.grader.EasyGrader",
-        "grader_class": "EasyGrader",
-        "grader_module": "server.grader",
         "difficulty": "easy",
         "max_steps": 20,
     },
@@ -44,9 +41,6 @@ TASK_META = [
             "Remove exact duplicate rows and normalise mixed date formats "
             "(ISO, US slash, natural-language) to strict YYYY-MM-DD."
         ),
-        "grader": "server.grader.MediumGrader",
-        "grader_class": "MediumGrader",
-        "grader_module": "server.grader",
         "difficulty": "medium",
         "max_steps": 20,
     },
@@ -58,9 +52,6 @@ TASK_META = [
             "dates, correct invalid enum values, and rename columns with illegal "
             "characters to valid snake_case identifiers."
         ),
-        "grader": "server.grader.HardGrader",
-        "grader_class": "HardGrader",
-        "grader_module": "server.grader",
         "difficulty": "hard",
         "max_steps": 20,
     },
