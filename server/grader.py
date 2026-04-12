@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 class Grader:
-    def __init__(self, task_difficulty="easy", task_id=None, **kwargs):
-        self.task_difficulty = task_id if task_id else task_difficulty
+    def __init__(self, difficulty="easy", task_name=None, task_id=None, task_difficulty=None, **kwargs):
+        self.task_difficulty = difficulty or task_name or task_id or task_difficulty or "easy"
 
     def forward(self, action=None, observation=None):
         try:
