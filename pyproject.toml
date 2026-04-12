@@ -1,20 +1,25 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "data-cleaner-env"
 version = "1.0.0"
 description = "OpenEnv Data Cleaning Environment"
 readme = "README.md"
+requires-python = ">=3.11"
 dependencies = [
-    "fastapi",
-    "uvicorn",
-    "pydantic",
-    "pandas",
-    "openai",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.6",
+    "pydantic>=2.8.2",
+    "pandas>=2.0.0",
+    "openai>=1.40.0",
     "openenv-core>=0.2.0"
 ]
 
 [project.scripts]
-server = "server.app:main"
+server = "server.app:app"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*", "models*"]
