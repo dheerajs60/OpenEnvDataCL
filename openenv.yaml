@@ -15,18 +15,21 @@ tasks:
   - id: easy
     name: Easy Imputation
     difficulty: easy
+    grader: server.grader.EasyGrader
     max_steps: 20
     score_range: [0.0, 1.0]
 
   - id: medium
     name: Medium Deduplication
     difficulty: medium
+    grader: server.grader.MediumGrader
     max_steps: 20
     score_range: [0.0, 1.0]
 
   - id: hard
     name: Hard Full CRM Cleanup
     difficulty: hard
+    grader: server.grader.HardGrader
     max_steps: 20
     score_range: [0.0, 1.0]
 
