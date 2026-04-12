@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 class Grader:
-    def __init__(self, task_difficulty: str = "easy"):
-        self.task_difficulty = task_difficulty
+    def __init__(self, task_difficulty: str = "easy", task_id: str = None, **kwargs):
+        self.task_difficulty = task_id if task_id else task_difficulty
 
     def grade(self, task_id: str, state: dict) -> float:
         score = state.get("score", 0.5)
