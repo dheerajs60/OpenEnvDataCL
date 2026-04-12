@@ -1,37 +1,41 @@
 spec_version: 1
 name: data_cleaner_env
+version: "1.0.0"
 description: >
   A multi-step reinforcement-learning benchmark for evaluating LLM agents on
   structured CRM data cleaning. Three difficulty tiers (easy / medium / hard),
   each graded by a dedicated scorer that measures null-handling, duplicate
   removal, date normalisation, schema repair, and category correction.
 
-entrypoint: server.app:app
-runtime: fastapi
-port: 8000
+author: DataCL
+license: MIT
+tags: [openenv, data-cleaning, crm, fastapi, reinforcement-learning]
 
 tasks:
-  - name: easy
-    description: >
-      Fill missing values in a simple 5-row customer dataset.
-      Tests dtype-aware imputation (numeric and text columns).
-    grader: server.grader.EasyGrader
-    grader_class: EasyGrader
-    grader_module: server.grader
+  - id: easy
+    name: Easy Imputation
+    difficulty: easy
+    max_steps: 20
+    score_range: [0.0, 1.0]
 
-  - name: medium
-    description: >
-      Remove exact duplicate rows and normalise mixed date formats
-      (ISO, US slash, natural-language) to strict YYYY-MM-DD.
-    grader: server.grader.MediumGrader
-    grader_class: MediumGrader
-    grader_module: server.grader
+  - id: medium
+    name: Medium Deduplication
+    difficulty: medium
+    max_steps: 20
+    score_range: [0.0, 1.0]
 
-  - name: hard
-    description: >
-      Full CRM data cleanup: fix nulls, remove duplicates, standardise
-      dates, correct invalid enum values, and rename columns with illegal
-      characters to valid snake_case identifiers.
-    grader: server.grader.HardGrader
-    grader_class: HardGrader
-    grader_module: server.grader
+  - id: hard
+    name: Hard Full CRM Cleanup
+    difficulty: hard
+    max_steps: 20
+    score_range: [0.0, 1.0]
+
+endpoints:
+  reset:    POST /reset?task_id={task_id}
+  step:     POST /step
+  state:    GET  /state
+  tasks:    GET  /tasks
+  grader:   GET  /grader
+  baseline: GET  /baseline
+  validate: GET  /validate
+  health:   GET  /health
