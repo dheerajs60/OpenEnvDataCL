@@ -2,9 +2,9 @@ import random
 import pandas as pd
 from typing import Dict, Any
 
-from env.tasks import TASKS
-from env.grader import Grader
-from env.models import Observation, Action, Reward
+from server.tasks import TASKS
+from server.grader import Grader
+from models import Observation, Action, Reward
 
 
 class DataCleanerEnv:

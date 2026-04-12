@@ -4,8 +4,8 @@ from typing import List
 
 from openai import OpenAI
 
-from env.cleaner_env import DataCleanerEnv
-from env.models import Action
+from server.environment import DataCleanerEnv
+from models import Action
 
 
 # MUST use injected proxy variables

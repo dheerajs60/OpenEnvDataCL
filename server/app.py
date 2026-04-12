@@ -3,8 +3,8 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
 
-from env.cleaner_env import DataCleanerEnv
-from env.models import Observation, Action
+from server.environment import DataCleanerEnv
+from models import Observation, Action
 
 app = FastAPI(title="Data Cleaning Environment")
 env_instance = DataCleanerEnv()

@@ -9,10 +9,10 @@ port: 8000
 tasks:
   - id: easy
     description: Fill missing values in a simple customer dataset
-    grader: env.grader.Grader
+    grader: server.grader.Grader
   - id: medium
     description: Remove duplicates and normalize mixed date formats
-    grader: env.grader.Grader
+    grader: server.grader.Grader
   - id: hard
     description: Multi-step CRM cleanup with nulls, duplicates, malformed dates
-    grader: env.grader.Grader
+    grader: server.grader.Grader
