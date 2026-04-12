@@ -1,18 +1,55 @@
 import pandas as pd
 import numpy as np
 
-class Grader:
+try:
+    from openenv.core.rubrics.base import Rubric
+    _base = Rubric
+except ImportError:
+    _base = object
+
+class Grader(_base):
     def __init__(self, task_difficulty: str = "easy", task_id: str = None, **kwargs):
+        if _base is not object:
+            super().__init__()
         self.task_difficulty = task_id if task_id else task_difficulty
 
-    def grade(self, task_id: str, state: dict) -> float:
-        score = state.get("score", 0.5)
-        return max(0.01, min(0.99, float(score)))
+    def forward(self, action=None, observation=None) -> float:
+        try:
+            if hasattr(observation, "detected_issues"):
+                issues = observation.detected_issues
+            elif isinstance(observation, dict):
+                issues = observation.get("detected_issues", [])
+            else:
+                issues = []
+            if not issues:
+                return 0.99
+            return max(0.01, 0.99 - (len(issues) * 0.1))
+        except Exception:
+            return 0.5
+
+    def grade(self, *args, **kwargs) -> float:
+        state = None
+        if len(args) == 2:
+            state = args[1]
+        elif len(args) == 1:
+            state = args[0]
+        elif "state" in kwargs:
+            state = kwargs["state"]
+        try:
+            if hasattr(state, "metadata"):
+                score = state.metadata.get("score", 0.5)
+            elif isinstance(state, dict):
+                score = state.get("score", 0.5)
+            else:
+                score = 0.5
+            return max(0.01, min(0.99, float(score)))
+        except Exception:
+            return 0.5
 
     def generate_schema(self, df: pd.DataFrame) -> dict:
         return {str(col): str(dtype) for col, dtype in df.dtypes.items()}
 
-    def detect_issues(self, df: pd.DataFrame) -> list[str]:
+    def detect_issues(self, df: pd.DataFrame) -> list:
         issues = []
         if df.isnull().sum().sum() > 0:
             issues.append("Contains missing values")
@@ -32,7 +69,7 @@ class Grader:
             issues.append("Contains invalid categorical data")
         return list(set(issues))
 
-    def grade_step(self, prev_df: pd.DataFrame, curr_df: pd.DataFrame, action: dict) -> tuple[float, str]:
+    def grade_step(self, prev_df: pd.DataFrame, curr_df: pd.DataFrame, action: dict) -> tuple:
         if len(curr_df) < len(prev_df):
             prev_valid = len(prev_df) - prev_df.duplicated().sum()
             curr_valid = len(curr_df) - curr_df.duplicated().sum()
@@ -76,7 +113,13 @@ class Grader:
             weights = {"null": 0.20, "duplicate": 0.35, "schema": 0.10, "date": 0.25, "category": 0.10}
         else:
             weights = {"null": 0.25, "duplicate": 0.25, "schema": 0.20, "date": 0.15, "category": 0.15}
-        score = (null_score * weights["null"] + duplicate_score * weights["duplicate"] + schema_score * weights["schema"] + date_score * weights["date"] + category_score * weights["category"])
+        score = (
+            null_score * weights["null"]
+            + duplicate_score * weights["duplicate"]
+            + schema_score * weights["schema"]
+            + date_score * weights["date"]
+            + category_score * weights["category"]
+        )
         orig_valid = len(orig_df) - orig_df.duplicated().sum()
         curr_valid = len(curr_df) - curr_df.duplicated().sum()
         if curr_valid < orig_valid:
@@ -84,8 +127,8 @@ class Grader:
         score = float(score)
         if np.isnan(score):
             score = 0.5
-        score = max(0.01, min(0.99, score))
-        return score
+        return max(0.01, min(0.99, score))
+
 TASK_GRADERS = {
     "easy": Grader,
     "medium": Grader,
